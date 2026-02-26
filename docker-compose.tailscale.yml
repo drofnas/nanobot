@@ -23,6 +23,7 @@ services:
     restart: unless-stopped
 
   nanobot-gateway:
+    ports: !reset []
     network_mode: service:tailscale
     depends_on:
       - tailscale
