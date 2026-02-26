@@ -894,6 +894,27 @@ docker compose logs -f nanobot-gateway                   # view logs
 docker compose down                                      # stop
 ```
 
+### Multiple Instances (Helper Bot)
+
+Run a second nanobot instance (“helper”) on the same machine with an isolated home directory at `~/.nanobot-helper`.
+
+> [!IMPORTANT]
+> Your helper bot should use its **own channel credentials** (e.g. a different Telegram bot token / Discord bot token) to avoid conflicts or duplicate replies.
+
+```bash
+docker compose -f docker-compose.helper.yml run --rm nanobot-helper-cli onboard   # first-time setup
+vim ~/.nanobot-helper/config.json                                                 # add API keys + model
+docker compose -f docker-compose.helper.yml up -d nanobot-helper-gateway          # start helper gateway
+```
+
+```bash
+docker compose -f docker-compose.helper.yml run --rm nanobot-helper-cli agent -m "Hello!"   # run helper CLI
+docker compose -f docker-compose.helper.yml logs -f nanobot-helper-gateway                   # view helper logs
+docker compose -f docker-compose.helper.yml down                                             # stop helper
+```
+
+> Helper gateway default: published on host port `18791` (container listens on `18790`).
+
 ### Docker Compose + Tailscale (optional, Tailscale-only)
 
 If you want your Nanobot deployment to appear as a **Machine** in the Tailscale UI and only be reachable over your **tailnet**, use the opt-in compose override: `docker-compose.tailscale.yml`.
@@ -922,6 +943,23 @@ NANOBOT_TS_AUTHKEY="tskey-..." docker compose -f docker-compose.yml -f docker-co
 ```
 
 After the first successful start, the node stays logged in using persisted state, so you can unset `NANOBOT_TS_AUTHKEY` and restart containers without reusing the key.
+
+#### Helper + Tailscale (optional, Tailscale-only)
+
+Use the helper compose files. First-time setup is the same, but targets `~/.nanobot-helper`:
+
+```bash
+docker compose -f docker-compose.helper.yml run --rm nanobot-helper-cli onboard
+vim ~/.nanobot-helper/config.json
+```
+
+Start helper with Tailscale enabled:
+
+```bash
+NANOBOT_HELPER_TS_AUTHKEY="tskey-..." docker compose -f docker-compose.helper.yml -f docker-compose.helper.tailscale.yml up -d
+```
+
+The helper gateway is reachable on port `18790` via its Tailscale IP (no host port publish). Optional: set `NANOBOT_HELPER_TS_HOSTNAME` to control the node name in Tailscale.
 
 ### Docker
 
