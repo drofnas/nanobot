@@ -23,13 +23,12 @@ services:
     restart: unless-stopped
 
   nanobot-gateway:
-    ports: !reset []
     network_mode: service:tailscale
     depends_on:
       - tailscale
     # Tailscale-only exposure: the gateway port is reachable via the tailnet,
     # but not published on the Docker host.
-    ports: []
+    ports: !reset []
 
 volumes:
   nanobot-tailscale-state:
