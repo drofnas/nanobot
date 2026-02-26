@@ -30,6 +30,7 @@ chmod 600 ~/.nanobot/config.json
 **Recommendations:**
 - Store API keys in `~/.nanobot/config.json` with file permissions set to `0600`
 - Consider using environment variables for sensitive keys
+- If you use dotenv files (`./.env` or `~/.nanobot/.env`), protect them like secrets (e.g. `chmod 600 ~/.nanobot/.env`)
 - Use OS keyring/credential manager for production deployments
 - Rotate API keys regularly
 - Use separate API keys for development and production

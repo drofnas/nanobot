@@ -20,6 +20,7 @@ from prompt_toolkit.patch_stdout import patch_stdout
 
 from nanobot import __version__, __logo__
 from nanobot.config.schema import Config
+from nanobot.utils.dotenv import load_dotenv_files
 
 app = typer.Typer(
     name="nanobot",
@@ -145,7 +146,7 @@ def main(
     ),
 ):
     """nanobot - Personal AI Assistant."""
-    pass
+    load_dotenv_files()
 
 
 # ============================================================================

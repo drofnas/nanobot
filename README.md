@@ -579,6 +579,17 @@ Simply send the command above to your nanobot (via CLI or any chat channel), and
 
 Config file: `~/.nanobot/config.json`
 
+### Environment Variables (`.env`)
+
+nanobot can also load environment variables from dotenv files on startup:
+
+- `./.env` (current working directory)
+- `~/.nanobot/.env` (global per-user; overrides `./.env`)
+
+**Precedence (highest → lowest):** process environment → `~/.nanobot/.env` → `./.env`.
+
+After changing either `.env` file, restart nanobot (e.g. restart the gateway container) so the new values are loaded.
+
 ### Providers
 
 > [!TIP]
