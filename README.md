@@ -883,6 +883,35 @@ docker compose logs -f nanobot-gateway                   # view logs
 docker compose down                                      # stop
 ```
 
+### Docker Compose + Tailscale (optional, Tailscale-only)
+
+If you want your Nanobot deployment to appear as a **Machine** in the Tailscale UI and only be reachable over your **tailnet**, use the opt-in compose override: `docker-compose.tailscale.yml`.
+
+This adds a `tailscale/tailscale` sidecar and runs `nanobot-gateway` in the sidecar's network namespace, so the gateway listens on port `18790` on its **Tailscale IP** (no host port publish).
+
+**Requirements:**
+- Docker host must support `/dev/net/tun` (Linux; for Docker Desktop, this may not be available)
+- The sidecar runs with `NET_ADMIN` capability
+
+**First-time setup** (same as above):
+
+```bash
+docker compose run --rm nanobot-cli onboard
+vim ~/.nanobot/config.json
+```
+
+**Start with Tailscale enabled:**
+
+1. Create a Tailscale **auth key** in the admin console (Settings → Keys).
+   Recommended: **preauthorized**, **non-reusable**. Optional: add a **tag** (for ACLs) and/or append `?ephemeral=true` to the key.
+2. Bring up the stack using both compose files:
+
+```bash
+NANOBOT_TS_AUTHKEY="tskey-..." docker compose -f docker-compose.yml -f docker-compose.tailscale.yml up -d
+```
+
+After the first successful start, the node stays logged in using persisted state, so you can unset `NANOBOT_TS_AUTHKEY` and restart containers without reusing the key.
+
 ### Docker
 
 ```bash

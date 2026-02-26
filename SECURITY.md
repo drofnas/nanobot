@@ -34,6 +34,11 @@ chmod 600 ~/.nanobot/config.json
 - Rotate API keys regularly
 - Use separate API keys for development and production
 
+**Tailscale credentials (Docker optional):**
+- Treat **Tailscale auth keys / OAuth client secrets** like API keys: never commit them, never paste them into issue trackers, and avoid storing them in long-lived `.env` files.
+- Prefer a **preauthorized**, **non-reusable** auth key for first boot, then rely on persisted Tailscale state (`TS_STATE_DIR`) for restarts.
+- If you enable the Tailscale sidecar, set `TS_AUTH_ONCE=true` and persist state so the key is only used once, then remove it from your shell history/environment.
+
 ### 2. Channel Access Control
 
 **IMPORTANT**: Always configure `allowFrom` lists for production use.
