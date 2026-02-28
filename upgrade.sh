@@ -9,9 +9,9 @@ cd "$(dirname "$0")"
 echo "==> git pull"
 git pull
 
-echo "==> Stopping main and helper (with Tailscale)"
-docker compose -f docker-compose.yml -f docker-compose.tailscale.yml down
+echo "==> Stopping helper then main (with Tailscale) — helper first so shared network can be removed"
 docker compose -f docker-compose.helper.yml -f docker-compose.helper.tailscale.yml down
+docker compose -f docker-compose.yml -f docker-compose.tailscale.yml down
 
 echo "==> Rebuilding images"
 docker compose build
