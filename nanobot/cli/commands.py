@@ -32,6 +32,7 @@ from rich.text import Text
 from nanobot import __logo__, __version__
 from nanobot.config.schema import Config
 from nanobot.utils.helpers import sync_workspace_templates
+from nanobot.utils.dotenv import load_dotenv_files
 
 app = typer.Typer(
     name="nanobot",
@@ -157,7 +158,7 @@ def main(
     ),
 ):
     """nanobot - Personal AI Assistant."""
-    pass
+    load_dotenv_files()
 
 
 # ============================================================================
@@ -205,6 +206,7 @@ def onboard():
     console.print("     Get one at: https://openrouter.ai/keys")
     console.print("  2. Chat: [cyan]nanobot agent -m \"Hello!\"[/cyan]")
     console.print("\n[dim]Want Telegram/WhatsApp? See: https://github.com/HKUDS/nanobot#-chat-apps[/dim]")
+    console.print("[dim]Docker users: see https://github.com/HKUDS/nanobot#-docker (optional Tailscale section included).[/dim]")
 
 
 
