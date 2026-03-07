@@ -12,9 +12,9 @@ docker compose -p nanobot-research -f docker-compose.research.yml -f docker-comp
 docker compose -p nanobot-main -f docker-compose.yml -f docker-compose.tailscale.yml down
 
 echo "==> Rebuilding images"
-docker compose build
-docker compose -f docker-compose.helper.yml build
-docker compose -f docker-compose.research.yml build
+docker compose -p nanobot-main build
+docker compose -p nanobot-helper -f docker-compose.helper.yml build
+docker compose -p nanobot-research -f docker-compose.research.yml build
 
 echo "==> Starting main bot (Tailscale)"
 docker compose -p nanobot-main -f docker-compose.yml -f docker-compose.tailscale.yml up -d
