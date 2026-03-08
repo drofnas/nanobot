@@ -181,6 +181,22 @@ class HeartbeatService:
 
         return False
 
+    def _format_schedule_context(self) -> str:
+        """Return a human-readable string of current time and effective window boundaries for logging."""
+        if not self.schedule:
+            return ""
+        tz = ZoneInfo(self.schedule.timezone)
+        now_str = datetime.now(tz).strftime("%H:%M")
+        window_strs = []
+        for w in self.schedule.windows:
+            end = time.fromisoformat(w.end)
+            end_mins = end.hour * 60 + end.minute
+            eff_end_mins = (end_mins - self.interval_s // 60) % (24 * 60)
+            eff_end_str = f"{eff_end_mins // 60:02d}:{eff_end_mins % 60:02d}"
+            window_strs.append(f"{w.start}–{eff_end_str}")
+        windows_fmt = "[" + ", ".join(window_strs) + "]"
+        return f"now={now_str} ({self.schedule.timezone}), windows={windows_fmt}"
+
     async def _run_loop(self) -> None:
         """Main heartbeat loop."""
         while self._running:
@@ -194,7 +210,7 @@ class HeartbeatService:
                 if self._running and self._in_schedule_window():
                     await self._tick()
                 elif self._running:
-                    logger.debug("Heartbeat: outside schedule window, skipping tick")
+                    logger.debug("Heartbeat: outside schedule window, skipping tick | {}", self._format_schedule_context())
             except asyncio.CancelledError:
                 break
             except Exception as e:
