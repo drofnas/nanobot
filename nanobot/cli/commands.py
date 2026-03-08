@@ -439,7 +439,7 @@ def gateway(
         interval_s=hb_cfg.interval_s,
         enabled=hb_cfg.enabled,
         schedule=hb_cfg.schedule,
-        config_path=config_path or get_config_path(),
+        config_path=get_config_path(),
     )
 
     if channels.enabled_channels:
