@@ -413,6 +413,7 @@ def gateway(
         await bus.publish_outbound(OutboundMessage(channel=channel, chat_id=chat_id, content=response))
 
     hb_cfg = config.gateway.heartbeat
+    from nanobot.config.loader import get_config_path
     heartbeat = HeartbeatService(
         workspace=config.workspace_path,
         provider=provider,
@@ -421,6 +422,8 @@ def gateway(
         on_notify=on_heartbeat_notify,
         interval_s=hb_cfg.interval_s,
         enabled=hb_cfg.enabled,
+        schedule=hb_cfg.schedule,
+        config_path=config_path or get_config_path(),
     )
 
     if channels.enabled_channels:

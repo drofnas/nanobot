@@ -969,6 +969,36 @@ The agent can also manage this file itself — ask it to "add a periodic task" a
 
 > **Note:** The gateway must be running (`nanobot gateway`) and you must have chatted with the bot at least once so it knows which channel to deliver to.
 
+**Schedule (optional):** restrict the heartbeat to specific time windows via `~/.nanobot/config.json`. Changes are picked up automatically — no restart required.
+
+```json
+"gateway": {
+  "heartbeat": {
+    "enabled": true,
+    "intervalS": 900,
+    "schedule": {
+      "timezone": "America/Los_Angeles",
+      "windows": [
+        { "start": "23:00", "end": "06:00" }
+      ]
+    }
+  }
+}
+```
+
+| Field | Description |
+|---|---|
+| `schedule.timezone` | IANA timezone name (e.g. `"America/Los_Angeles"`, `"UTC"`, `"Europe/London"`) |
+| `schedule.windows` | List of time windows; each has a `start` and `end` in `HH:MM` 24-hour format |
+| `windows[].start` | Window open time |
+| `windows[].end` | Window close time — the heartbeat will only fire if there is a full interval remaining before this time |
+
+Multiple windows are supported (e.g. a night window and a midday window). Windows that cross midnight (like `23:00`–`06:00` above) are handled automatically.
+
+**Interval boundary:** the effective end of a window is pulled back by one interval so the last tick always fits. For example, with `intervalS: 900` (15 min) and `end: "06:00"`, the last allowed tick is at `05:45`. A tick that would start at `05:46` is skipped.
+
+Omitting `schedule` entirely (or leaving `windows` empty) means the heartbeat runs at all times.
+
 </details>
 
 ## 🐳 Docker

@@ -270,11 +270,26 @@ class ProvidersConfig(Base):
     github_copilot: ProviderConfig = Field(default_factory=ProviderConfig)  # Github Copilot (OAuth)
 
 
+class ScheduleWindow(Base):
+    """A single time window during which the heartbeat is allowed to run."""
+
+    start: str  # "HH:MM" in 24-hour format
+    end: str    # "HH:MM" in 24-hour format (may be less than start for overnight windows)
+
+
+class HeartbeatSchedule(Base):
+    """Schedule restricting when the heartbeat may run."""
+
+    timezone: str = "UTC"  # IANA timezone name, e.g. "America/Los_Angeles"
+    windows: list[ScheduleWindow] = Field(default_factory=list)
+
+
 class HeartbeatConfig(Base):
     """Heartbeat service configuration."""
 
     enabled: bool = True
     interval_s: int = 30 * 60  # 30 minutes
+    schedule: HeartbeatSchedule | None = None  # None = always run
 
 
 class GatewayConfig(Base):
