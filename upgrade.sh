@@ -8,4 +8,4 @@ cd "$(dirname "$0")"
 echo "==> git pull"
 git pull
 
-bash "$(dirname "$0")/reset.sh"
+bash "$(dirname "$0")/restart.sh"

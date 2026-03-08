@@ -1,31 +1,163 @@
-x-common-config: &common-config
+# ──────────────────────────────────────────────────────────────────────────────
+# Nanobot – Consolidated Docker Compose
+#
+# Three gateway instances (main, helper, research), each paired with its own
+# Tailscale sidecar.  Each gateway shares its sidecar's network namespace so
+# it appears on the tailnet under its own hostname.
+#
+# Environment variables (shell or .env file):
+#   NANOBOT_TS_AUTHKEY            Tailscale auth key – main      (first boot only)
+#   NANOBOT_HELPER_TS_AUTHKEY     Tailscale auth key – helper    (first boot only)
+#   NANOBOT_RESEARCH_TS_AUTHKEY   Tailscale auth key – research  (first boot only)
+#   NANOBOT_TS_HOSTNAME           tailnet hostname – main        (default: nanobot)
+#   NANOBOT_HELPER_TS_HOSTNAME    tailnet hostname – helper      (default: nanobot-helper)
+#   NANOBOT_RESEARCH_TS_HOSTNAME  tailnet hostname – research    (default: nanobot-research)
+# ──────────────────────────────────────────────────────────────────────────────
+
+# Shared Tailscale sidecar config (kernel-mode, needs tun device + NET_ADMIN)
+x-tailscale: &tailscale
+  image: tailscale/tailscale:latest
+  devices:
+    - /dev/net/tun:/dev/net/tun
+  cap_add:
+    - NET_ADMIN
+  restart: unless-stopped
+
+# Shared gateway config (build, resource limits)
+x-gateway: &gateway
   build:
     context: .
     dockerfile: Dockerfile
-  volumes:
-    - ~/.nanobot:/root/.nanobot
+  command: ["gateway"]
+  restart: unless-stopped
+  deploy:
+    resources:
+      limits:
+        cpus: "1"
+        memory: 1G
+      reservations:
+        cpus: "0.25"
+        memory: 256M
 
 services:
+
+  # ── Main ────────────────────────────────────────────────────────────────────
+
+  tailscale-main:
+    <<: *tailscale
+    container_name: nanobot-tailscale
+    hostname: nanobot
+    environment:
+      - TS_AUTHKEY=${NANOBOT_TS_AUTHKEY:-}
+      - TS_AUTH_ONCE=true
+      - TS_STATE_DIR=/var/lib/tailscale
+      - TS_USERSPACE=false
+      - TS_HOSTNAME=${NANOBOT_TS_HOSTNAME:-nanobot}
+    volumes:
+      - nanobot-tailscale-state:/var/lib/tailscale
+
   nanobot-gateway:
+    <<: *gateway
     container_name: nanobot-gateway
-    <<: *common-config
-    command: ["gateway"]
-    restart: unless-stopped
-    ports:
-      - 18790:18790
-    deploy:
-      resources:
-        limits:
-          cpus: '1'
-          memory: 1G
-        reservations:
-          cpus: '0.25'
-          memory: 256M
-  
+    volumes:
+      - ~/.nanobot:/root/.nanobot
+    network_mode: service:tailscale-main
+    depends_on:
+      - tailscale-main
+
+  # ── Helper ──────────────────────────────────────────────────────────────────
+
+  tailscale-helper:
+    <<: *tailscale
+    container_name: nanobot-helper-tailscale
+    hostname: nanobot-helper
+    environment:
+      - TS_AUTHKEY=${NANOBOT_HELPER_TS_AUTHKEY:-}
+      - TS_AUTH_ONCE=true
+      - TS_STATE_DIR=/var/lib/tailscale
+      - TS_USERSPACE=false
+      - TS_HOSTNAME=${NANOBOT_HELPER_TS_HOSTNAME:-nanobot-helper}
+    volumes:
+      - nanobot-helper-tailscale-state:/var/lib/tailscale
+
+  nanobot-helper-gateway:
+    <<: *gateway
+    container_name: nanobot-helper-gateway
+    volumes:
+      - ~/.nanobot-helper:/root/.nanobot
+    network_mode: service:tailscale-helper
+    depends_on:
+      - tailscale-helper
+
+  # ── Research ────────────────────────────────────────────────────────────────
+
+  tailscale-research:
+    <<: *tailscale
+    container_name: nanobot-research-tailscale
+    hostname: nanobot-research
+    environment:
+      - TS_AUTHKEY=${NANOBOT_RESEARCH_TS_AUTHKEY:-}
+      - TS_AUTH_ONCE=true
+      - TS_STATE_DIR=/var/lib/tailscale
+      - TS_USERSPACE=false
+      - TS_HOSTNAME=${NANOBOT_RESEARCH_TS_HOSTNAME:-nanobot-research}
+    volumes:
+      - nanobot-research-tailscale-state:/var/lib/tailscale
+
+  nanobot-research-gateway:
+    <<: *gateway
+    container_name: nanobot-research-gateway
+    volumes:
+      - ~/.nanobot-research:/root/.nanobot
+    network_mode: service:tailscale-research
+    depends_on:
+      - tailscale-research
+
+  # ── CLI helpers ─────────────────────────────────────────────────────────────
+  # Run with: docker compose run --rm --profile cli-main nanobot-cli
+  #           docker compose run --rm --profile cli-helper nanobot-helper-cli
+  #           docker compose run --rm --profile cli-research nanobot-research-cli
+
   nanobot-cli:
-    <<: *common-config
+    build:
+      context: .
+      dockerfile: Dockerfile
     profiles:
-      - cli
+      - cli-main
+    volumes:
+      - ~/.nanobot:/root/.nanobot
     command: ["status"]
     stdin_open: true
     tty: true
+
+  nanobot-helper-cli:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    profiles:
+      - cli-helper
+    volumes:
+      - ~/.nanobot-helper:/root/.nanobot
+    command: ["status"]
+    stdin_open: true
+    tty: true
+
+  nanobot-research-cli:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    profiles:
+      - cli-research
+    volumes:
+      - ~/.nanobot-research:/root/.nanobot
+    command: ["status"]
+    stdin_open: true
+    tty: true
+
+volumes:
+  nanobot-tailscale-state:
+    driver: local
+  nanobot-helper-tailscale-state:
+    driver: local
+  nanobot-research-tailscale-state:
+    driver: local
